@@ -181,6 +181,4 @@ TemplatesViewStateMachine()
 
 10. Modelowanie
 
-### Wzorce projektowe na ratunek
 
-#### Builder

@@ -64,8 +64,10 @@ interface State<T extends string, D> {
 
 type StateCreator<T extends string> = <D>(data?: D) => State<T, D>;
 
+type StateRecord<T extends string> = { creator: StateCreator<T>; type: T };
+
 type AllowedStatesMap<T extends string> = {
-  [K in T]: StateCreator<T>[];
+  [K in T]: StateRecord<T>[];
 };
 
 type TemplatesViewStates =
@@ -97,27 +99,53 @@ const DataLoadFail: StateCreator<TemplatesViewStates> = () => ({
 const TEMPLATES_VIEW_ALLOWED_STATES: Partial<
   AllowedStatesMap<TemplatesViewStates>
 > = {
-  IDLE: [AppLoading],
-  APP_LOADING: [AppLoaded],
-  APP_LOADED: [DataLoading],
+  IDLE: [{ creator: AppLoading, type: "APP_LOADING" }],
+  APP_LOADING: [{ creator: AppLoaded, type: "APP_LOADED" }],
+  APP_LOADED: [{ creator: DataLoaded, type: "DATA_LOADED" }],
   // ...etc
+};
+
+const validateState = (
+  states: StateRecord<string>[] | undefined,
+  currentState: State<TemplatesViewStates, unknown>
+) => {
+  if (!Array.isArray(states) || states.length === 0) {
+    throw new Error(
+      `[LACK_OF_STATE_IN_ALLOWED_STATES] Check allowed state definition and align states for state with type ${currentState.type}`
+    );
+  }
 };
 
 const TemplatesViewStateMachine = (currentState = Idle()) => {
   return {
     next: <P extends Record<string, unknown>>(payload?: P) => {
-      const state = TEMPLATES_VIEW_ALLOWED_STATES[currentState.type];
+      const allowedStates = TEMPLATES_VIEW_ALLOWED_STATES[currentState.type];
+
+      validateState(allowedStates, currentState);
+
+      const [state] = allowedStates;
+
+      return TemplatesViewStateMachine(state.creator(payload));
+    },
+    set: <P extends Record<string, unknown>>(
+      type: TemplatesViewStates,
+      payload?: P
+    ) => {
+      const allowedStates = TEMPLATES_VIEW_ALLOWED_STATES[type];
+
+      validateState(allowedStates, currentState);
+
+      const state = allowedStates.find((s) => s.type === type);
 
       if (!state) {
         throw new Error(
-          `[LACK_OF_STATE_IN_ALLOWED_STATES] Check allowed state definition and align states for state with type ${currentState.type}`
+          `[STATE_NOT_ALLOWED] Usage of ${type} state is not allowed for current state ${currentState.type}`
         );
       }
 
-      const [firstState] = state;
-
-      return TemplatesViewStateMachine(firstState(payload));
+      return TemplatesViewStateMachine(state.creator());
     },
+    restart: () => TemplatesViewStateMachine(Idle()),
     read: () => currentState,
   };
 };
@@ -128,4 +156,5 @@ TemplatesViewStateMachine()
   .next()
   .next({ templates: [{ id: 1, name: "State machines" }] })
   .read();
+
 ```

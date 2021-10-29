@@ -26,3 +26,28 @@ Przykład: https://pillarclient.z16.web.core.windows.net/app/templates/all
 
 To co się dzieje wewnątrz, jakie mechanizmy tym sterują nas nie interesuje. Ważne jest tylko to co widzimy na interfejsie - tak jak na twarzy Jasia.
 
+### Maszyna stanów na przykładzie jas.jpg
+
+Co steruje procesem zmiany wyrazu twarzy Jasia? No z pewnością jest to mózg (pewnie nie jest to tak proste, ale wiadomo). 
+
+Maszyna stanów to nic innego jak właśnie mózg, który steruje procesem przejścia oraz wnioskuje, w które stany aktualnie można przejść, a w które nie. Przykładowo żeby zacząć biec najpierw trzeba iść.
+
+### Maszyna stanów na przykładzie apki
+
+Przykład: https://pillarclient.z16.web.core.windows.net/app/templates/all
+
+Z przykładu wyżej wiemy, że mamy w aplikacji kilka stanów:
+
+- Idle - start,
+- AppLoading - ładowanie apki,
+- AppLoaded - apka załadowana,
+- LoadingData - ładowanie danych,
+- LoadedData - dane załadowano - widzimy je na interfejsie w postaci listy
+
+Założmy, że jest jeszcze jeden stan, który odpowiada sytuacji błędu z serwera (LoadDataFail), wtedy chcemy pokazać jakiś ekran z błędem. Coś takiego:
+
+![windows](https://i.ytimg.com/vi/PnD8fTtJw9I/maxresdefault.jpg)
+
+Z logicznego punktu widzenia żeby przejść w stan błędu pobierania danych najpierw trzeba przejść przez stany Idle, AppLoading, AppLoaded, LoadingData, tu będzie stan LoadDataFail.
+
+Tym w jakie stany można przejść steruje właśnie maszyna stanów.

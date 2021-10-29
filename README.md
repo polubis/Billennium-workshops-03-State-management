@@ -51,3 +51,81 @@ Założmy, że jest jeszcze jeden stan, który odpowiada sytuacji błędu z serw
 Z logicznego punktu widzenia żeby przejść w stan błędu pobierania danych najpierw trzeba przejść przez stany Idle, AppLoading, AppLoaded, LoadingData, tu będzie stan LoadDataFail.
 
 Tym w jakie stany można przejść steruje właśnie maszyna stanów.
+
+#### Przykład w kodzie
+
+> Pamiętaj, że narazie to tylko POC naszej maszyny stanów - pierwszy pomysł, a nie gotowa implementacja.
+
+```ts
+interface State<T extends string, D> {
+  data?: D;
+  type: T;
+}
+
+type StateCreator<T extends string> = <D>(data?: D) => State<T, D>;
+
+type AllowedStatesMap<T extends string> = {
+  [K in T]: StateCreator<T>[];
+};
+
+type TemplatesViewStates =
+  | "IDLE"
+  | "APP_LOADING"
+  | "APP_LOADED"
+  | "DATA_LOADING"
+  | "DATA_LOADED"
+  | "DATA_LOAD_FAIL";
+
+const Idle: StateCreator<TemplatesViewStates> = () => ({ type: "IDLE" });
+const AppLoading: StateCreator<TemplatesViewStates> = () => ({
+  type: "APP_LOADING",
+});
+const AppLoaded: StateCreator<TemplatesViewStates> = () => ({
+  type: "APP_LOADED",
+});
+const DataLoading: StateCreator<TemplatesViewStates> = () => ({
+  type: "DATA_LOADING",
+});
+const DataLoaded: StateCreator<TemplatesViewStates> = <D>(data: D) => ({
+  data,
+  type: "DATA_LOADED",
+});
+const DataLoadFail: StateCreator<TemplatesViewStates> = () => ({
+  type: "DATA_LOAD_FAIL",
+});
+
+const TEMPLATES_VIEW_ALLOWED_STATES: Partial<
+  AllowedStatesMap<TemplatesViewStates>
+> = {
+  IDLE: [AppLoading],
+  APP_LOADING: [AppLoaded],
+  APP_LOADED: [DataLoading],
+  // ...etc
+};
+
+const TemplatesViewStateMachine = (currentState = Idle()) => {
+  return {
+    next: <P extends Record<string, unknown>>(payload?: P) => {
+      const state = TEMPLATES_VIEW_ALLOWED_STATES[currentState.type];
+
+      if (!state) {
+        throw new Error(
+          `[LACK_OF_STATE_IN_ALLOWED_STATES] Check allowed state definition and align states for state with type ${currentState.type}`
+        );
+      }
+
+      const [firstState] = state;
+
+      return TemplatesViewStateMachine(firstState(payload));
+    },
+    read: () => currentState,
+  };
+};
+// Idle -> AppLoading -> AppLoaded -> DataLoading -> DataLoaded
+TemplatesViewStateMachine()
+  .next()
+  .next()
+  .next()
+  .next({ templates: [{ id: 1, name: "State machines" }] })
+  .read();
+```

@@ -158,3 +158,29 @@ TemplatesViewStateMachine()
   .read();
 
 ```
+
+### Przepis na "dobry" state management
+
+1. Normalizuj dane.
+
+2. Łącz ze sobą dane w obrębie wspólnego kontekstu.
+
+3. Logika do zmiany stanu powinna znależć się poza frameworkiem.
+
+4. Przejścia pomiędzy stanami powinny być proste i zrozumiałe.
+
+5. Nie stosuj maszyny stanów wszędzie.
+
+6. Wykorzystuj mapowania zamiast dodawać nowe właściwości do stanu.
+
+7. Dobierz rozwiązanie do skali problemu
+
+8. Redux to nie maszyna stanów.
+
+9. State management oddzielnie, a efekty oddzielnie.
+
+10. Modelowanie
+
+### Wzorce projektowe na ratunek
+
+#### Builder

@@ -192,6 +192,8 @@ Wzorzec wykorzystywany do budowania złożonych obiektów. Idealnie wpisuje się
 
 ```
 
+#### Observable
+
 #### Inversion of control
 
 
@@ -201,13 +203,21 @@ Niestety takiego nie ma. Żadne z podejść nie jest idealne - powinno być dobi
 
 ### Reaktywność, a state management.
 
-### Fabryki powtarzalnych funkcjonalności.
+Podejście reaktywne do zarządzania stanem daje bardzo dużo. Przykładowo załóżmy, że mamy zaimplementowaną maszyne stanów. Mamy mechanizm, który jest gdzieś w kodzie. Chciałbym na widoku A mieć obsługiwaną te samą maszyne stanów co w widoku B (te samą instancję). Dodatkowo widget C również ma z tego korzystać. Mam również middleware D, które chce dostać informację jeżeli pojawi się jakiś stan, który jest uważany z błędny i zaloguje wszystkie poprzednie stany użytkownika. 
 
-### Funkcyjnie czy obiektowo
+Maszyna stanów świetnie sprawdza się ze wzorcem **observable**. Możemy zdefiniować cały proces przejścia, następnie go obserwować z różnych miejsc w aplikacji i odpowiednio pobierać informacje, które nas interesują, wykonywać na nich operacje. 
+
+Analogicznie możemy wykorzystać podejście z **builderem**.
 
 ### Różne podejście do tego samego problemu, czyli nie zawsze pierwszy pomysł jest dobry.
 
+https://stackblitz.com/edit/angular-gnxn4s?file=src%2Fapp%2Fonly-state-machine-used.component.ts
+
 ### Analiza przykładu prostej apki i różnych rozwiązań tego samego problemu
+
+### Fabryki powtarzalnych funkcjonalności.
+
+### Funkcyjnie czy obiektowo
 
 ### Czy daleko nam do własnego frameworka?
 

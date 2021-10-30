@@ -1,8 +1,6 @@
 # Billennium-workshops-03-State-management-and-application-flow/architecture
 
-Warsztaty wprowadzające w różne techniki zarządzania stanem. 
-
-### Jak uruchomić przykład ?
+Warsztaty wprowadzające w różne techniki zarządzania stanem i architekture aplikacji frontendowej.
 
 ### Czym jest state - na przykładzie Jasia ?
 

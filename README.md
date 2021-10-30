@@ -26,13 +26,21 @@ Przykład: https://pillarclient.z16.web.core.windows.net/app/templates/all
 
 To co się dzieje wewnątrz, jakie mechanizmy tym sterują nas nie interesuje. Ważne jest tylko to co widzimy na interfejsie - tak jak na twarzy Jasia.
 
-### Maszyna stanów na przykładzie jas.jpg
+### State management
+
+Proces zarządzania zmianą stanów. Tu skupimamy się na konkretach. Przykładowo móżg plus hormony sterują zachowaniem organizmu u człowieka. W przypadku aplikacji może to być `react` + wzorzec maszyny stanów zaimplementowany samodzielne bądź z użyciem gotowej biblioteki jak `xstate`.
+
+### Wzorce projektowe na ratunek
+
+Tak jak do biegania potrzebne są dobre buty to i w przypadku zarządzania stanem potrzebujemy odpowiednich narzędzi. Będą nimi wzorce projektowe. To czy korzystamy z React, Angular, ...etc nie ma żadnego znaczenia,
+
+#### Maszyna stanów na przykładzie jas.jpg
 
 Co steruje procesem zmiany wyrazu twarzy Jasia? No z pewnością jest to mózg (pewnie nie jest to tak proste, ale wiadomo). 
 
 Maszyna stanów to nic innego jak właśnie mózg, który steruje procesem przejścia oraz wnioskuje, w które stany aktualnie można przejść, a w które nie. Przykładowo żeby zacząć biec najpierw trzeba iść.
 
-### Maszyna stanów na przykładzie apki
+#### Maszyna stanów na przykładzie apki
 
 Przykład: https://pillarclient.z16.web.core.windows.net/app/templates/all
 
@@ -52,9 +60,14 @@ Z logicznego punktu widzenia żeby przejść w stan błędu pobierania danych na
 
 Tym w jakie stany można przejść steruje właśnie maszyna stanów.
 
-#### Przykład w kodzie
+#### Maszyna stanów - przykład w kodzie
 
-> Pamiętaj, że narazie to tylko POC naszej maszyny stanów - pierwszy pomysł, a nie gotowa implementacja.
+1. Zanim zaczniesz kodować - zidentyfikuj stany w twojej funkcjonalności.
+2. Określ przejścia pomiędzy stanami. Czy stan A może przejść w stan B.
+3. Zacznij implementacje krótkich funkcji tworzących poszczególne stany.
+4. Dorzuć logikę obsługującą zmiane - jak przejście ze stanu A w C jest nie dozwolone, to rzuć wyjątek (podejście **fail fast**).
+
+> Pamiętaj, że narazie to tylko POC naszej maszyny stanów - pierwszy pomysł, a nie gotowa implementacja. Zamiast pisać samemu możemy użyc gotowego rozwiązania w zależności od potrzeb.
 
 ```ts
 interface State<T extends string, D> {
@@ -156,13 +169,46 @@ TemplatesViewStateMachine()
   .next()
   .next({ templates: [{ id: 1, name: "State machines" }] })
   .read();
+```
+
+#### Builder
+
+Wzorzec wykorzystywany do budowania złożonych obiektów. Idealnie wpisuje się w budowanie stanu krok po kroku. Dodatkowo z wykorzystaniem wzorca **chain of responsibility** pozwala stworzyć wygodne i przejrzyste api.
+
+```ts
 
 ```
 
+#### Decorator
+
+
+```ts
+
+```
+
+#### Chain of responsibility
+
+```ts
+
+```
+
+#### Inversion of control
+
+
 ### Przepis na "dobry" state management
 
-1. Zanim zaczniesz kodować - zidentyfikuj stany w twojej funkcjonalności.
-2. Określ przejścia pomiędzy stanami. Czy stan A może przejść w stan B ? (patrz przykład wyżej).
+Niestety takiego nie ma. Żadne z podejść nie jest idealne - powinno być dobierane per projekt i zespół developerski. To prześledzimy na koniec.
 
+### Reaktywność, a state management.
 
+### Fabryki powtarzalnych funkcjonalności.
 
+### Funkcyjnie czy obiektowo
+
+### Różne podejście do tego samego problemu, czyli nie zawsze pierwszy pomysł jest dobry.
+
+### Analiza przykładu prostej apki i różnych rozwiązań tego samego problemu
+
+### Czy daleko nam do własnego frameworka?
+
+### Podsumowanie

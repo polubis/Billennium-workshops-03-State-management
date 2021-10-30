@@ -171,6 +171,39 @@ TemplatesViewStateMachine()
   .read();
 ```
 
+#### Maszyna stanów z xstate
+
+```ts
+const templatesViewMachine = createMachine({
+  /* ... */
+  context: {
+    data: null,
+  },
+  states: {
+    idle: {},
+    selected: {
+      initial: 'idle',
+      states: {
+        idle: {},
+        appLoading: {},
+        appLoaded: {},
+        dataLoading: {},
+        dataLoaded: {},
+        dataLoadFail: {}
+        ...etc
+      }
+    }
+  },
+  on: {
+    /* ... */
+  }
+});
+
+const [current, send] = useMachine(redditMachine);
+current.matches('idle') // -> jaki jest aktualnie stan
+const { subreddit, posts } = current.context;  // -> odczyt danych
+```
+
 #### Builder
 
 Wzorzec wykorzystywany do budowania złożonych obiektów. Idealnie wpisuje się w budowanie stanu krok po kroku. Dodatkowo z wykorzystaniem wzorca **chain of responsibility** pozwala stworzyć wygodne i przejrzyste api.

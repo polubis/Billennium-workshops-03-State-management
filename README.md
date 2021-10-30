@@ -207,7 +207,17 @@ Podejście reaktywne do zarządzania stanem daje bardzo dużo. Przykładowo zał
 
 Maszyna stanów świetnie sprawdza się ze wzorcem **observable**. Możemy zdefiniować cały proces przejścia, następnie go obserwować z różnych miejsc w aplikacji i odpowiednio pobierać informacje, które nas interesują, wykonywać na nich operacje. 
 
-Analogicznie możemy wykorzystać podejście z **builderem**.
+Analogicznie możemy wykorzystać podejście z **builderem**. 
+
+Przykładowo `redux` implementuje wzorzec obserwator do tego, aby podłączyć się do **store** i nasłuchiwać na zmianę stanu.
+
+```ts
+store.subscribe(state => console.log(state))
+```
+
+Po wywoływaniu `dispatch` z obiektem akcji - `reducer` przejmie obiekt i zwróci nowy stan zaraz po tym wywołana zostanie funkcja anonimowa w `subscribe`. 
+
+https://res.cloudinary.com/practicaldev/image/fetch/s--V1XmAEPc--/c_imagga_scale,f_auto,fl_progressive,h_900,q_auto,w_1600/https://i.stack.imgur.com/LNQwH.png
 
 ### Różne podejście do tego samego problemu, czyli nie zawsze pierwszy pomysł jest dobry.
 
@@ -220,5 +230,10 @@ https://stackblitz.com/edit/angular-gnxn4s?file=src%2Fapp%2Fonly-state-machine-u
 ### Funkcyjnie czy obiektowo
 
 ### Czy daleko nam do własnego frameworka?
+
+### FAQ
+
+Q: Czy redux to maszyna stanów skoro obiekty akcji posiadają typ ?
+A: Nie. Traktujmy `reduxa` jak `Context API` w `react` czy `service` w `angular`. To tylko narzędzie do ustalenia co ma się stać w oparciu o jaki obiekt akcji. Aby to była maszyna stanów brakuje nam obsługi kiedy w jaki stan możemy przejść. Jest to jak najbardziej możliwe do implementacji.
 
 ### Podsumowanie

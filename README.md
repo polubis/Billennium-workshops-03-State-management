@@ -204,23 +204,50 @@ const { subreddit, posts } = current.context;  // -> odczyt danych
 
 #### Builder
 
-Wzorzec wykorzystywany do budowania złożonych obiektów. Idealnie wpisuje się w budowanie stanu krok po kroku. Dodatkowo z wykorzystaniem wzorca **chain of responsibility** pozwala stworzyć wygodne i przejrzyste api.
+Wzorzec wykorzystywany do budowania złożonych obiektów. Idealnie wpisuje się w budowanie stanu krok po kroku. Dodatkowo z wykorzystaniem wzorca **chain of responsibility** pozwala stworzyć wygodne i przejrzyste api. W poniższym przykładzie - tworzymy obiekt użytkownika, a następnie go modyfikujemy przed wykonaniem `valueOf()`.
 
 ```ts
+interface User {
+  username: string;
+  phone: string;
+  code: number;
+}
 
+const createUser = (): User => ({
+  username: 'piotr1994',
+  phone: '999 229 323',
+  code: 2232,
+});
+
+const userBuilder = (user = createUser()) => ({
+  valueOf: () => user, // albo build()
+  setUsername: (username: User['username']) => userBuilder({ ...user, username }),
+  setPhone: (phone: User['phone']) => userBuilder({ ...user, phone }),
+  setCode: (code: User['code']) => userBuilder({ ...user, code }),
+});
+
+const basicUser = userBuilder();
+
+// Component A
+basicUser.setUsername('piotr').valueOf();
+
+// Component B
+basicUser.setUsername('Asia').valueOf()
 ```
 
 #### Decorator
 
 
 ```ts
-
+Tu dodać przykłąd z veh
 ```
 
 #### Chain of responsibility
 
-```ts
+Za każda kolejną operacją zwracamy nowo stworzony obiekt ze stanem po wykonanej operacji.
 
+```ts
+setUsername: (username: User['username']) => userBuilder({ ...user, username }) // w tej funkcji zawarty jest wzorzec
 ```
 
 #### Observable

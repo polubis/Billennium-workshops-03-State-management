@@ -252,8 +252,103 @@ setUsername: (username: User['username']) => userBuilder({ ...user, username }) 
 
 #### Observable
 
-#### Inversion of control
+Prosty wzorzec, który polega na stworzeniu struktury danych, która przechowa nam funkcje. Je dodajemy za pomocą metody `subscribe`. Następnie przy wywołaniu operacji zmiany czegoś w obiekcie wywołujemy wszystkie funkcje ze struktury danych. 
 
+> My nie piszemy tego ręcznie - użyjemy `rxjs`. To tylko przykład dla zobrazowania.
+
+```ts
+interface User {
+    id: number;
+    firstName: string;
+    lastName: string;
+}
+
+type UserObserver = (user: User) => void; 
+    
+class UserModel {
+    private _user: User;
+
+    private _observers: UserObserver[] = [];
+
+    get user(): User {
+        return this._user;
+    }
+
+    set user(user: User) {
+        this._user = user;
+        this._notify();
+    }
+
+    private _notify = (): void => {
+        this._observers.forEach(sb => sb(this.user));
+    }
+
+    subscribe = (observer: UserObserver): void => {
+        this._observers = [...this._observers, observer];
+    };
+
+    unsubscribe = (observer: UserObserver): void => {
+        this._observers = this._observers.filter(ob => ob !== observer);
+    };
+
+    load = (): Promise<void> => {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                const user = { id: 1, firstName: 'Piotr', lastName: 'Piotrowicz' } as User;
+                this.user = user;
+                resolve();
+            }, 500);
+        });
+    }
+}
+
+class UserView {
+    constructor(private _model: UserModel) {
+        this._model.subscribe(
+            user => {
+                this.render(user, document.getElementById('root'))
+            }
+        )
+    }
+
+    render = (user, target: HTMLElement): void => {
+        const ul = document.createElement('ul');
+
+        ul.appendChild(document.createRange().createContextualFragment(
+            `
+                <li>
+                    <span>${user.id}</span>
+                    <b>${user.firstName}</b>
+                    <b>${user.lastName}</b>
+                </li>`
+        ));
+
+        target.appendChild(ul);
+    }
+}
+
+class UserController {
+    private _view: UserView;
+    private _model: UserModel;
+
+    constructor() {
+        this._model = new UserModel();
+        this._view = new UserView(this._model);
+    }
+
+    display = async (): Promise<void> => {
+        const isUserDisplayed = !!this._model.user;
+
+        if (isUserDisplayed) {
+            return;
+        }
+
+        await this._model.load();
+    }
+}
+
+const userController = new UserController();
+```
 
 ### Przepis na "dobry" state management
 

@@ -534,9 +534,102 @@ export class NaiveImperativeCodeUsedComponent implements OnInit {
 
 Aby zwiększyć współczynnik **cohesion** należy rozbić implementację na poszczególne moduły co robi poniższy kod.
 
+```ts
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { tap } from 'rxjs/operators';
 
+import { Users } from './models';
+import { NullableUser } from './models';
+import { UsersService } from './users.service';
+import Provider from './provider';
 
+@Component({
+  selector: 'app-only-provider-used',
+  template: `
+    <div class="section" *ngIf="(usersProvider.data$ | async) as users">
+      <ng-container *ngIf="users.loading">
+        Loading users...
+      </ng-container>
+
+      <ng-container *ngIf="!users.loading">
+        <h3 class="section-header">Users section</h3>
+
+        <ng-container *ngIf="users.error.loading">
+          Error occured !
+          <button (click)="handleLoadUsers()">Reload users</button>
+        </ng-container>
+
+        <ng-container *ngIf="!users.error.loading">
+          <ul style="display: flex; flex-flow: column">
+            <li
+              *ngFor="let user of users.value"
+              (click)="handleLoadUser(user.id)"
+            >
+              {{ user.username }}
+            </li>
+          </ul>
+        </ng-container>
+      </ng-container>
+    </div>
+
+    <div class="section" *ngIf="(userProvider.data$ | async) as user">
+      <ng-container *ngIf="user.loading">
+        Loading user...
+      </ng-container>
+
+      <ng-container *ngIf="!user.loading">
+        <h3 class="section-header">User details</h3>
+
+        <ng-container *ngIf="user.error.loading">
+          Error occured !
+          <button (click)="handleLoadUser(recentUserId)">
+            Reload details
+          </button>
+        </ng-container>
+
+        <ng-container *ngIf="!user.error.loading">
+          <div *ngIf="user.value">
+            {{ user.value.id }} {{ user.value.username }}
+          </div>
+          <div *ngIf="!user.value">No users loaded yet</div>
+        </ng-container>
+      </ng-container>
+    </div>
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class OnlyProviderUsedComponent implements OnInit {
+  readonly userProvider = Provider<NullableUser>(null);
+  readonly usersProvider = Provider<Users>([]);
+
+  recentUserId = -1;
+
+  constructor(private _usersService: UsersService) {}
+
+  ngOnInit(): void {
+    this.handleLoadUsers();
+  }
+
+  handleLoadUsers(): void {
+    this.usersProvider.load(
+      this._usersService.getUsers().pipe(
+        tap(users => {
+          if (users.length > 0) {
+            this.handleLoadUser(users[0].id);
+          }
+        })
+      )
+    );
+  }
+
+  handleLoadUser(id: number): void {
+    this.recentUserId = id;
+    this.userProvider.load(this._usersService.getUser(id));
+  }
+}
 ```
+
+Kod komponentu odpowiada teraz za wyświetlenie danych i wywoływanie implementacji z `providera`.
 
 ### Fabryki powtarzalnych funkcjonalności.
 

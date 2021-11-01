@@ -372,12 +372,22 @@ Po wywoływaniu `dispatch` z obiektem akcji - `reducer` przejmie obiekt i zwróc
 
 ![Redux](https://res.cloudinary.com/practicaldev/image/fetch/s--V1XmAEPc--/c_imagga_scale,f_auto,fl_progressive,h_900,q_auto,w_1600/https://i.stack.imgur.com/LNQwH.png)
 
-
 ### Różne podejście do tego samego problemu, czyli nie zawsze pierwszy pomysł jest dobry.
 
 https://stackblitz.com/edit/angular-gnxn4s?file=src%2Fapp%2Fonly-state-machine-used.component.ts
 
 ### Analiza przykładu prostej apki i różnych rozwiązań tego samego problemu.
+
+#### Co chcemy uzyskać?
+
+- Prosty widok z listą użytkowników oraz z szczegółami użytkownika.
+- Po załadowaniu listy ładujemy dane 1 załadowanego użytkownika.
+- Możliwość załadowania ponownie w przypadku błędu listy i szczegółów.
+- Pod uwagę zawsze brany jest ostatni rezultat.
+- Po kliknięciu użytkownika ładujemy jego dane.
+- Możliwość łatwego wykorzystania napisanego kodu w innych podobnych funkcjonalnościach.
+
+#### Jak to zrobić?
 
 Powinniśmy iść w kierunku **high cohesion** czyli grupujemy to co ze sobą powiązane w konkretnym module oraz **loose coupling** czyli jak najmniej zależności. Framework taki jak 
 `Angular` oferuje nam **Dependency injection**, które zmniejsza `coupling` z automatu. Dostajemy gotową instancję jakiegoś obiektu w momencie zadeklarowania zmiennej jako parametr konstruktora.

@@ -374,10 +374,6 @@ Po wywoływaniu `dispatch` z obiektem akcji - `reducer` przejmie obiekt i zwróc
 
 ![Redux](https://res.cloudinary.com/practicaldev/image/fetch/s--V1XmAEPc--/c_imagga_scale,f_auto,fl_progressive,h_900,q_auto,w_1600/https://i.stack.imgur.com/LNQwH.png)
 
-### Różne podejście do tego samego problemu, czyli nie zawsze pierwszy pomysł jest dobry.
-
-https://stackblitz.com/edit/angular-gnxn4s?file=src%2Fapp%2Fonly-state-machine-used.component.ts
-
 ### Analiza przykładu prostej apki i różnych rozwiązań tego samego problemu.
 
 #### Co chcemy uzyskać?
@@ -774,6 +770,10 @@ export class ManagerUsedComponent implements OnInit {
 ```
 
 W ten sposób podmiana widoku będzie banalna. W dodatku zyskaliśmy łatwy do testowania oddzielny moduł oraz komponent prezentacyjny. Możemy oddzielnie to przetestować oraz ingerencja w kod teraz jest znacznie łatwiejsza. Można taki kod jeszcze bardziej rozbić tworząc komponent, który przyjmuje dane i je pokazuje i wykorzystać go w kodzie templatki, ale to już jest drobnostka. 
+
+### Różne podejście do tego samego problemu, czyli nie zawsze pierwszy pomysł jest dobry.
+
+https://stackblitz.com/edit/angular-gnxn4s?file=src%2Fapp%2Fonly-state-machine-used.component.ts
 
 ### Fabryki powtarzalnych funkcjonalności.
 

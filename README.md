@@ -629,7 +629,138 @@ export class OnlyProviderUsedComponent implements OnInit {
 }
 ```
 
-Kod komponentu odpowiada teraz za wyświetlenie danych i wywoływanie implementacji z `providera`.
+Kod komponentu odpowiada teraz za wyświetlenie danych i wywoływanie implementacji z `providera`. W dalszym ciągu jednak ten komponent ma duży problem. Jest związany z logiką biznesową, która w tym przypadku sprawia, że nie będziemy mogli go wykorzystać. W dodatku podmiana z jednego widoku -> implementacji czysto wizualnej na drugi spowoduje konieczność ingerencji w ten kod. Ta logikę musimy przenieść gdzieś "wyżej", tak aby komponent tylko porozumiewał się z wyniesionym modułem i reagował na zmiane danych. To robimy niżej.
+
+```ts
+import { Injectable } from '@angular/core';
+import { tap } from 'rxjs/operators';
+
+import { NullableUser, Users } from './models';
+import { UsersService } from './users.service';
+import Manager from './manager';
+
+interface ManagableUsers {
+  users: Users;
+  user: NullableUser;
+}
+
+@Injectable()
+export class UsersManager {
+  private _manager = Manager<ManagableUsers>({ users: [], user: null });
+  private _recentLoadedUserId = -1;
+
+  users$ = this._manager.providers.users.data$;
+  user$ = this._manager.providers.user.data$;
+
+  constructor(private _usersService: UsersService) {}
+
+  loadUsers(): void {
+    this._manager.providers.users.load(
+      this._usersService.getUsers().pipe(
+        tap((users) => {
+          if (users.length > 0) {
+            this.loadUser(users[0].id);
+          }
+        })
+      )
+    );
+  }
+
+  loadUser(id: number): void {
+    this._recentLoadedUserId = id;
+    this._manager.providers.user.load(this._usersService.getUser(id));
+  }
+
+  reloadUser(): void {
+    this.loadUser(this._recentLoadedUserId);
+  }
+}
+
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+
+import { UsersManager } from './users.manager';
+
+@Component({
+  selector: 'app-manager-used',
+  template: `
+    <div class="section" *ngIf="(users$ | async) as users">
+      <ng-container *ngIf="users.loading">
+        Loading users...
+      </ng-container>
+
+      <ng-container *ngIf="!users.loading">
+        <h3 class="section-header">Users section</h3>
+
+        <ng-container *ngIf="users.error.loading">
+          Error occured !
+          <button (click)="handleReloadUsersClick()">Reload users</button>
+        </ng-container>
+
+        <ng-container *ngIf="!users.error.loading">
+          <ul style="display: flex; flex-flow: column">
+            <li
+              *ngFor="let user of users.value"
+              (click)="handleUserClick(user.id)"
+            >
+              {{ user.username }}
+            </li>
+          </ul>
+        </ng-container>
+      </ng-container>
+    </div>
+
+    <div class="section" *ngIf="(user$ | async) as user">
+      <ng-container *ngIf="user.loading">
+        Loading user...
+      </ng-container>
+
+      <ng-container *ngIf="!user.loading">
+        <h3 class="section-header">User details</h3>
+
+        <ng-container *ngIf="user.error.loading">
+          Error occured !
+          <button (click)="handleReloadUserClick()">
+            Reload details
+          </button>
+        </ng-container>
+
+        <ng-container *ngIf="!user.error.loading">
+          <div *ngIf="user.value">
+            {{ user.value.id }} {{ user.value.username }}
+          </div>
+          <div *ngIf="!user.value">No users loaded yet</div>
+        </ng-container>
+      </ng-container>
+    </div>
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [UsersManager]
+})
+export class ManagerUsedComponent implements OnInit {
+  users$ = this._usersManager.users$;
+  user$ = this._usersManager.user$;
+
+  constructor(private _usersManager: UsersManager) {}
+
+  ngOnInit(): void {
+    this._usersManager.loadUsers();
+  }
+
+  handleUserClick(id: number): void {
+    this._usersManager.loadUser(id);
+  }
+
+  handleReloadUsersClick(): void {
+    this._usersManager.loadUsers();
+  }
+
+  handleReloadUserClick(): void {
+    this._usersManager.reloadUser();
+  }
+}
+```
+
+W ten sposób podmiana widoku będzie banalna. W dodatku zyskaliśmy łatwy do testowania oddzielny moduł oraz komponent prezentacyjny. Możemy oddzielnie to przetestować oraz ingerencja w kod teraz jest znacznie łatwiejsza. Można taki kod jeszcze bardziej rozbić tworząc komponent, który przyjmuje dane i je pokazuje i wykorzystać go w kodzie templatki, ale to już jest drobnostka. 
 
 ### Fabryki powtarzalnych funkcjonalności.
 

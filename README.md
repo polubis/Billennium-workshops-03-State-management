@@ -815,11 +815,22 @@ Wykorzystywanie obydwu paradygmatów powinno mieć swoje uzasadnienie. Przykład
 
 ### Czy daleko nam do własnego frameworka?
 
-Framework to nic innego jak zestaw podejść, dobrych praktyk, narzędzi, technologii. Większość z nich już mamy. Musimy tylko odpowiednio je dobierać do problemu. 
+Framework to nic innego jak zestaw podejść, dobrych praktyk, narzędzi, technologii. Większość z nich już mamy. Musimy tylko odpowiednio je dobierać do problemu. Wystarczy spisać gdzieś w jednym miejscu wszystkie reguły, które powinny być przestrzegane oraz stworzyć narzędzia - patrz `Feature`. 
+
+Wklej tu imp z veh.
+
+### Podsumowanie
+
+Przeszliśmy przez kilka implementacji i rozwiązań tego samego problemu. Każde z nich ma swoje dobre i słabe strony. Kwestią doświadczenia jest dobór odpowiedniego rozwiązania dlatego nigdy nie powinniśmy zamykać się na własne eksperymenty. 
 
 ### FAQ
 
 - Q: Czy redux to maszyna stanów skoro obiekty akcji posiadają typ?
 - A: Nie. Traktujmy `reduxa` jak `Context API` w `react` czy `service` w `angular`. To tylko narzędzie do ustalenia co ma się stać w oparciu o jaki obiekt akcji. Aby to była maszyna stanów brakuje nam obsługi kiedy w jaki stan możemy przejść. Jest to jak najbardziej możliwe do implementacji.
 
-### Podsumowanie
+- Q: Czy zaprezentowane podejścia będą się sprawdzały w każdej aplikacji?
+- A: Nie. Przykładowo zastosowanie podejścia z `Manager` świetnie sprawdzi się w aplikacjach posiadających wiele podobnych funkcjonalności. Jednak w momencie gdy dochodzi dużo customowej logiki może okazać się, że łatwiej napisać to bez `Manager` np. z wykorzystaniem `redux`. 
+
+- Q: Dlaczego mam tworzyć koło na nowo skoro są już dostępne narzędzia?
+- A: Odpowiedź na to jest prosta. Dla nauki, zrozumienia narzędzi, których się używa i jakie problemy rozwiązują oraz po to, żeby znajdować zawsze najlepsze rozwiązanie. Później mając przed sobą projekt odrazu można oszacować, która technologia najlepiej się sprawdzi i dlaczego.
+

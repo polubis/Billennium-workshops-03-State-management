@@ -382,8 +382,12 @@ https://stackblitz.com/edit/angular-gnxn4s?file=src%2Fapp%2Fonly-state-machine-u
 Powinniśmy iść w kierunku **high cohesion** czyli grupujemy to co ze sobą powiązane w konkretnym module oraz **loose coupling** czyli jak najmniej zależności. Framework taki jak 
 `Angular` oferuje nam **Dependency injection**, które zmniejsza `coupling` z automatu. Dostajemy gotową instancję jakiegoś obiektu w momencie zadeklarowania zmiennej jako parametr konstruktora.
 
-> High cohesion: Elements within one class/module should functionally belong together and do one particular thing.
-> Loose coupling: Among different classes/modules should be minimal dependency.
+- **High cohesion**: Elements within one class/module should functionally belong together and do one particular thing.
+- **Loose coupling**: Among different classes/modules should be minimal dependency.
+
+Na 2 powyższe terminy możemy patrzeć z różnego poziomu / przybliżenia. Przykładowo biorąć pod uwagę moduł, klasę, funkcje. Analizując poniższy kod z perspektywy klasy już widać, że robi ona zbyt dużo rzeczy. Analogicznie funkcja `handleGetUsers`.
+
+Poniższy przykład 
 
 ```ts
 import {
@@ -466,6 +470,7 @@ export class NaiveImperativeCodeUsedComponent implements OnInit {
   }
 
   handleGetUser(id: number): void {
+    // 
     this.recentUserId = id;
 
     if (!this.loadingUser) {

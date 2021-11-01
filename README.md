@@ -775,6 +775,23 @@ W ten sposób podmiana widoku będzie banalna. W dodatku zyskaliśmy łatwy do t
 
 ### Fabryki powtarzalnych funkcjonalności.
 
+Mając na uwadze problemy, które zlokalizowaliśmy we wcześniejszych implementacjach możemy wykorzystać tą wiedze to zbudowania modułu obsługującego proste funkcjonalności `CRUD`.
+
+Prototyp API:
+
+```ts
+type User = { id: number, name: string };
+type Users = User[]
+
+const feature = Feature<Users>({ 
+    create: service.addUsers,
+    read: service.editUsers,
+    update: service.updateUsers,
+    delete: service.deleteUsers
+})
+
+```
+
 ### Funkcyjnie czy obiektowo
 
 ### Czy daleko nam do własnego frameworka?

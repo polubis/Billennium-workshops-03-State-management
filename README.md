@@ -785,22 +785,41 @@ Prototyp API:
 type User = { id: number, name: string };
 type Users = User[]
 
-const feature = Feature<Users>({ 
+const MappingState = { type: 'mapping' }
+
+const usersFeatures = Feature<Users>({ 
     create: service.addUsers,
     read: service.editUsers,
     update: service.updateUsers,
-    delete: service.deleteUsers
+    delete: service.deleteUsers,
+    value: [], // wartość domyślnie pusta tablica użytkowników
+    states: [MappingState] // dodatkowe stany, które sobie definiujemy dla definicji typów,
+    middlewares: [ErrorDrawMiddleware, ContractValidationMiddleware],
+    events: [listenChange]
 })
 
+usersFeatures.setValue() // -> pozwala na zmiane wartości
+usersFeatures.setValue((context) => context.value || context.state) // -> pozwala na zmiane wartości
+
+usersFeatures.create() // -> wywołuje zapytanie do api z serwisu plus zmienia stany na **creating, created, createFail**. Analogicznie dla pozostałych.
+usersFeatures.state // -> zwraca stan -> **idle**, **creating**, itp...
+usersFeatures.value // -> zwraca wartość tablicę użytkowników.
+usersFeatures.context // -> zwraca wartość oraz stan
+usersFeatures.setState(MappingState) // -> ustawia stan manualnie
+usersFeatures.onValueSet(() => {}) // -> funkcja wywoływana podczas modyfikowania value
 ```
 
 ### Funkcyjnie czy obiektowo
 
+Wykorzystywanie obydwu paradygmatów powinno mieć swoje uzasadnienie. Przykładowo mając aplikację w `react` korzystać będziemy z paradygmatów funkcyjnych bo tak pisze się lepiej, szybciej, jest więcej gotowego kodu napisanego w ten sposób, ...etc. Jednak modelując aplikacje możemy dojść do wniosku, że obiektowe podejście gdzie nie gdzie jest wygodniejsze. Powinniśmy decydować o tym, które z nich wykorzystać do jakiego problemu, a nie dlatego, że jedne bardziej lubimy.
+
 ### Czy daleko nam do własnego frameworka?
+
+Framework to nic innego jak zestaw podejść, dobrych praktyk, narzędzi, technologii. Większość z nich już mamy. Musimy tylko odpowiednio je dobierać do problemu. 
 
 ### FAQ
 
-Q: Czy redux to maszyna stanów skoro obiekty akcji posiadają typ ?
-A: Nie. Traktujmy `reduxa` jak `Context API` w `react` czy `service` w `angular`. To tylko narzędzie do ustalenia co ma się stać w oparciu o jaki obiekt akcji. Aby to była maszyna stanów brakuje nam obsługi kiedy w jaki stan możemy przejść. Jest to jak najbardziej możliwe do implementacji.
+- Q: Czy redux to maszyna stanów skoro obiekty akcji posiadają typ?
+- A: Nie. Traktujmy `reduxa` jak `Context API` w `react` czy `service` w `angular`. To tylko narzędzie do ustalenia co ma się stać w oparciu o jaki obiekt akcji. Aby to była maszyna stanów brakuje nam obsługi kiedy w jaki stan możemy przejść. Jest to jak najbardziej możliwe do implementacji.
 
 ### Podsumowanie

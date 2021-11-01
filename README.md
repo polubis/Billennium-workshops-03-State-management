@@ -541,6 +541,7 @@ export class NaiveImperativeCodeUsedComponent implements OnInit {
     this.handleGetUser(this.recentUserId);
   }
 }
+```
 
 Aby zwiększyć współczynnik **cohesion** należy rozbić implementację na poszczególne moduły co robi poniższy kod.
 

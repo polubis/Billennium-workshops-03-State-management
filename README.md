@@ -379,7 +379,155 @@ https://stackblitz.com/edit/angular-gnxn4s?file=src%2Fapp%2Fonly-state-machine-u
 
 ### Analiza przykładu prostej apki i różnych rozwiązań tego samego problemu.
 
-Tu analiza
+Powinniśmy iść w kierunku **high cohesion** czyli grupujemy to co ze sobą powiązane w konkretnym module oraz **loose coupling** czyli jak najmniej zależności. Framework taki jak 
+`Angular` oferuje nam **Dependency injection**, które zmniejsza `coupling` z automatu. Dostajemy gotową instancję jakiegoś obiektu w momencie zadeklarowania zmiennej jako parametr konstruktora.
+
+> High cohesion: Elements within one class/module should functionally belong together and do one particular thing.
+> Loose coupling: Among different classes/modules should be minimal dependency.
+
+```ts
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  OnInit,
+} from '@angular/core';
+import { Users } from './models';
+import { NullableUser } from './models';
+import { UsersService } from './users.service';
+
+@Component({
+  selector: 'app-naive-imperative-code-used',
+  template: `
+    <div class="section">
+      <ng-container *ngIf="loadingUsers">
+        Loading users...
+      </ng-container>
+
+      <ng-container *ngIf="!loadingUsers">
+        <h3 class="section-header">Users section</h3>
+
+        <ng-container *ngIf="usersError">
+          Error occured !
+          <button (click)="handleGetUsers()">Reload users</button>
+        </ng-container>
+
+        <ng-container *ngIf="!usersError">
+          <ul style="display: flex; flex-flow: column">
+            <li *ngFor="let user of users" (click)="handleGetUser(user.id)">
+              {{ user.username }}
+            </li>
+          </ul>
+        </ng-container>
+      </ng-container>
+    </div>
+
+    <div class="section">
+      <ng-container *ngIf="loadingUser">
+        Loading user...
+      </ng-container>
+
+      <ng-container *ngIf="!loadingUser">
+        <h3 class="section-header">User details</h3>
+
+        <ng-container *ngIf="userError">
+          Error occured !
+          <button (click)="handleReloadUser()">
+            Reload details
+          </button>
+        </ng-container>
+
+        <ng-container *ngIf="!userError">
+          <div *ngIf="user">{{ user.id }} {{ user.username }}</div>
+          <div *ngIf="!user">No users loaded yet</div>
+        </ng-container>
+      </ng-container>
+    </div>
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class NaiveImperativeCodeUsedComponent implements OnInit {
+  loadingUsers = true;
+  usersError = false;
+  users: Users = [];
+
+  recentUserId = -1;
+  loadingUser = true;
+  userError = false;
+  user: NullableUser = null;
+
+  constructor(
+    private _userService: UsersService,
+    private _ref: ChangeDetectorRef
+  ) {}
+
+  ngOnInit(): void {
+    this.handleGetUsers();
+  }
+
+  handleGetUser(id: number): void {
+    this.recentUserId = id;
+
+    if (!this.loadingUser) {
+      this.user = null;
+      this.loadingUser = true;
+      this.userError = false;
+    }
+
+    this._ref.detectChanges();
+
+    this._userService.getUser(id).subscribe(
+      (user) => {
+        this.user = user;
+        this.loadingUser = false;
+        this.userError = false;
+        this._ref.detectChanges();
+      },
+      () => {
+        this.user = null;
+        this.loadingUser = false;
+        this.userError = true;
+        this._ref.detectChanges();
+      }
+    );
+  }
+
+  handleGetUsers(): void {
+    if (!this.loadingUsers) {
+      this.users = [];
+      this.loadingUsers = true;
+      this.usersError = false;
+    }
+
+    this._ref.detectChanges();
+
+    this._userService.getUsers().subscribe(
+      (users) => {
+        this.users = users;
+        this.loadingUsers = false;
+        this.usersError = false;
+        this._ref.detectChanges();
+
+        if (this.users.length > 0) {
+          this.handleGetUser(this.users[this.users.length - 1].id);
+        }
+      },
+      () => {
+        this.users = [];
+        this.loadingUsers = false;
+        this.loadingUser = false;
+        this.usersError = true;
+        this._ref.detectChanges();
+      }
+    );
+  }
+
+  handleReloadUser(): void {
+    this.handleGetUser(this.recentUserId);
+  }
+}
+```
+
 
 ### Fabryki powtarzalnych funkcjonalności.
 

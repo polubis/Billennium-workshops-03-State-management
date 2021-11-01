@@ -385,7 +385,7 @@ Powinniśmy iść w kierunku **high cohesion** czyli grupujemy to co ze sobą po
 - **High cohesion**: Elements within one class/module should functionally belong together and do one particular thing.
 - **Loose coupling**: Among different classes/modules should be minimal dependency.
 
-Na 2 powyższe terminy możemy patrzeć z różnego poziomu / przybliżenia. Przykładowo biorąć pod uwagę moduł, klasę, funkcje. Analizując poniższy kod z perspektywy klasy już widać, że robi ona zbyt dużo rzeczy. Analogicznie funkcja `handleGetUsers`.
+Na 2 powyższe terminy możemy patrzeć z różnego poziomu / przybliżenia. Przykładowo biorąć pod uwagę moduł, klasę, funkcje. Analizując poniższy kod z perspektywy klasy już widać, że robi ona zbyt dużo rzeczy. Analogicznie funkcja `handleGetUsers`. 
 
 Poniższy przykład 
 
@@ -531,8 +531,12 @@ export class NaiveImperativeCodeUsedComponent implements OnInit {
     this.handleGetUser(this.recentUserId);
   }
 }
-```
 
+Aby zwiększyć współczynnik **cohesion** należy rozbić implementację na poszczególne moduły co robi poniższy kod.
+
+
+
+```
 
 ### Fabryki powtarzalnych funkcjonalności.
 

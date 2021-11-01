@@ -2,6 +2,8 @@
 
 Warsztaty wprowadzające w różne techniki zarządzania stanem i architekture aplikacji frontendowej.
 
+> Important: Jak wyżej napisane "wprowadzenie", aby temat bardziej zgłębić i zrozumieć potrzebna jest praca własna z materiałem.
+
 ### Czym jest state - na przykładzie Jasia ?
 
 - Dla uproszczenia przyjmijmy, że rozmawiamy na temat matury z Jasiem.

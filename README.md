@@ -910,6 +910,691 @@ https://github.com/polubis/Billennium-workshops-03-State-management/blob/main/RE
 
 #### Przykładowa implementacja w `react`
 
+Poniższy kod jest kodem, który implementuje wyszukiwarkę podobną z działania do tej na `netflix`. Poniższy kod został również troche zmieniony. Nie mogę pokazać go w całości.
+
+```ts
+// Router - definicja pod jakimi metadanymi pokazujemy konkretne komponenty
+import React from 'react';
+
+import {
+    AllContainer,
+    HubsContainer,
+    LiveContainer,
+    NewsAndStoriesContainer,
+    DocumentsContainer,
+    SocialContainer
+} from '../containers';
+import { useSearchRouterProvider } from '../providers';
+
+const ROUTES = [
+    AllContainer,
+    HubsContainer,
+    LiveContainer,
+    NewsAndStoriesContainer,
+    DocumentsContainer,
+    SocialContainer
+];
+
+const SearchRouter = () => {
+    const { activeRouteId } = useSearchRouterProvider();
+
+    if (!ROUTES[activeRouteId]) {
+        throw new Error('[COMPONENT_NOT_FOUND] There is no component defined for this route id.');
+    }
+
+    const Component = COMPONENTS[activeRouteId];
+
+    return <Component />;
+};
+```
+
+```ts
+// RouterProvider definicja logiki routingu oraz udostępnienie jej przez context api
+import React, { useState, createContext, useContext, useMemo, useCallback } from 'react';
+
+export const ROUTES = ['All', 'Hubs', 'Live', 'News and stories', 'Documents', 'Social'];
+export const [
+    ALL_ROUTE,
+    HUBS_ROUTE,
+    LIVE_ROUTE,
+    NEWS_AND_STORIES_ROUTE,
+    DOCUMENTS_ROUTE,
+    SOCIAL_ROUTE
+] = ROUTES;
+
+const SearchRouterContext = createContext();
+
+const isRoute = (id, routes, route) => id === routes.indexOf(route);
+
+export const SearchRouterProvider = ({ children }) => {
+    const [activeRouteId, setActiveRouteId] = useState(0);
+
+    const changeRoute = useCallback(value => {
+        if (typeof value === 'number') {
+            if (!ROUTES[value]) {
+                throw new Error('[INVALID_ROUTE_ID] Route id is not defined in routes.');
+            }
+
+            setActiveRouteId(value);
+        }
+
+        const idx = ROUTES.findIndex(route => route === value);
+
+        if (idx === -1) {
+            throw new Error('[INVALID_ROUTE] Route name is not defined in routes.');
+        }
+
+        setActiveRouteId(idx);
+    }, []);
+
+    const value = useMemo(
+        () => ({
+            activeRoute: ROUTES[activeRouteId],
+            activeRouteId,
+            routes: ROUTES,
+            isAllRoute: () => isRoute(activeRouteId, ROUTES, ALL_ROUTE),
+            isHubsRoute: () => isRoute(activeRouteId, ROUTES, HUBS_ROUTE),
+            isLiveRoute: () => isRoute(activeRouteId, ROUTES, LIVE_ROUTE),
+            isNewsAndStoriesRoute: () => isRoute(activeRouteId, ROUTES, NEWS_AND_STORIES_ROUTE),
+            isDocumentsRoute: () => isRoute(activeRouteId, ROUTES, DOCUMENTS_ROUTE),
+            isSocialRoute: () => isRoute(activeRouteId, ROUTES, SOCIAL_ROUTE),
+            changeRoute
+        }),
+        [activeRouteId]
+    );
+
+    return <SearchRouterContext.Provider value={value}>{children}</SearchRouterContext.Provider>;
+};
+
+export const useSearchRouterProvider = () => useContext(SearchRouterContext);
+```
+
+```ts
+// Moduł - punkt wejścia do konkretnej większej funkcjonalności
+import React from 'react';
+
+import WithSuspense from 'hoc/with-suspense/WithSuspense';
+
+import { useSearchModule } from './utils';
+
+const SearchModuleContainer = WithSuspense(() =>
+    import('./containers/SearchModuleContainer').then(module => ({
+        default: module.SearchModuleContainer
+    }))
+);
+
+const SearchModule = () => {
+    const [isOpen] = useSearchModule();
+
+    return isOpen ? <SearchModuleContainer /> : null;
+};
+
+export { SearchModule };
+```
+
+```ts
+// Prosty hook do obsługi pokaż moduł / schowaj moduł
+import { useEffect, useState } from 'react';
+import { BehaviorSubject } from 'rxjs';
+
+const opened = new BehaviorSubject(false);
+export const opened$ = opened.asObservable();
+
+export const openSearchModule = () => {
+    opened.next(true);
+};
+
+export const closeSearchModule = () => {
+    opened.next(false);
+};
+
+export const useSearchModule = () => {
+    const [isOpen, setIsOpen] = useState(opened.getValue());
+
+    useEffect(() => {
+        const sub = opened$.subscribe(open => setIsOpen(open));
+
+        return () => {
+            sub.unsubscribe();
+        };
+    }, []);
+
+    return [isOpen, openSearchModule, closeSearchModule];
+};
+```
+
+```ts
+// Encja - obsługa logiki biznesowej oraz stanów przejściowych
+import {
+    merge,
+    Idle,
+    Loading,
+    Loaded,
+    LoadFail,
+    LoadingMore,
+    LoadedMore,
+    LoadMoreFail,
+    LoadedAll,
+    Sorting,
+    Sorted,
+    SortingFail,
+    Entity
+} from 'veh-dk';
+
+export const SEARCH_DATA_KEYS = {
+    BLOGS: 'blogs',
+    DISCUSSIONS: 'discussions',
+    DOCUMENTS: 'documents',
+    EVENT_FAQ_ITEMS: 'eventFaqItems',
+    EVENT_MEMBERS: 'eventMembers',
+    EVENTS: 'events',
+    LINKS: 'links',
+    LIVE_SESSIONS: 'liveSessions',
+    MESSAGES: 'messages',
+    TEXT_BOXES: 'textBoxes',
+    VIDEOS: 'videos'
+};
+
+const createStateForNodes = (data, stateFn, keys = SEARCH_DATA_KEYS) =>
+    Object.values(keys).reduce((acc, key) => merge(acc, { [key]: stateFn(key, data[key]) }), {});
+
+const checkIsAllLoaded = ({ results, totalCount }) => results.length >= totalCount;
+
+const createEmptyNodes = () =>
+    Object.values(SEARCH_DATA_KEYS).reduce(
+        (acc, key) =>
+            merge(acc, {
+                [key]: {
+                    totalCount: 0,
+                    results: []
+                }
+            }),
+        {}
+    );
+
+const EMPTY_NODES = createEmptyNodes();
+
+const preventEmptyNodes = data => merge(EMPTY_NODES, data);
+
+export class SearchDataEntity extends Entity {
+    _statelessValue;
+
+    constructor() {
+        super(Idle());
+    }
+
+    asLoading = () => this._replace(Loading());
+
+    asLoadFail = () => this._replace(LoadFail());
+
+    _setTransitionState = (keys, stateFn) =>
+        this._merge({
+            data: merge(
+                this.valueOf().data,
+                keys.reduce(
+                    (acc, key) => merge(acc, { [key]: stateFn(this._statelessValue[key]) }),
+                    {}
+                )
+            )
+        });
+
+    asLoaded = data => {
+        this._statelessValue = preventEmptyNodes(data);
+
+        return this._replace(
+            Loaded(
+                merge(
+                    { totalCount: this._statelessValue.totalCount },
+                    createStateForNodes(this._statelessValue, (_, nodeData) =>
+                        checkIsAllLoaded(nodeData) ? LoadedAll(nodeData) : Loaded(nodeData)
+                    )
+                )
+            )
+        );
+    };
+
+    asLoadingMore = keys => this._setTransitionState(keys, LoadingMore);
+
+    asLoadedMore = (keys, data) => {
+        const notEmptyData = preventEmptyNodes(data);
+
+        this._statelessValue = merge(
+            this._statelessValue,
+            keys.reduce(
+                (acc, key) =>
+                    merge(acc, {
+                        [key]: merge(this._statelessValue[key], {
+                            results: [
+                                ...this._statelessValue[key].results,
+                                ...notEmptyData[key].results
+                            ]
+                        })
+                    }),
+                {}
+            )
+        );
+
+        return this._merge({
+            data: merge(
+                this.valueOf().data,
+                createStateForNodes(this._statelessValue, (_, nodeData) =>
+                    checkIsAllLoaded(nodeData) ? LoadedAll(nodeData) : LoadedMore(nodeData)
+                )
+            )
+        });
+    };
+
+    asLoadMoreFail = keys => this._setTransitionState(keys, LoadMoreFail);
+
+    asSorting = keys => this._setTransitionState(keys, Sorting);
+
+    asSorted = (keys, data) => {
+        this._statelessValue = merge(
+            this._statelessValue,
+            keys.reduce(
+                (acc, key) =>
+                    merge(acc, {
+                        [key]: data[key]
+                    }),
+                {}
+            )
+        );
+
+        return this._merge({
+            data: merge(
+                this.valueOf().data,
+                createStateForNodes(this._statelessValue, (_, nodeData) =>
+                    checkIsAllLoaded(nodeData) ? LoadedAll(nodeData) : Sorted(nodeData)
+                )
+            )
+        });
+    };
+
+    asSortingFail = keys => this._setTransitionState(keys, SortingFail);
+
+    isBusy = keys => {
+        const { data, isBusy } = this.valueOf();
+        return isBusy || keys.some(key => data[key].isBusy);
+    };
+
+    isLoadedAll = keys => {
+        const { data } = this.valueOf();
+        return keys.some(key => data[key].isLoadedAll);
+    };
+
+    getLength = key => this._statelessValue[key].results.length;
+
+    statelessValueOf = () => this._statelessValue;
+}
+```
+
+```ts 
+// Provider - zarządzanie komunikacją, abstrakcja pomiędzy encjami a komponentami oraz udostępnienie handlerów przez context api do wywołania całej sekwencji operacji. Również zarządzanie asynchronicznościa.
+
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { EMPTY, from, Subscription } from 'rxjs';
+import { catchError, debounceTime, switchMap, filter, tap, map, takeUntil } from 'rxjs/operators';
+
+import { SearchDataEntity, SearchPayloadEntity } from '../entities';
+import { useSubject } from 'hooks/useSubject';
+import { merge } from 'veh-dk';
+import { SearchService } from '../services';
+
+const SearchContext = createContext();
+
+export const SearchProvider = ({ children }) => {
+    const [payloadEntity, setPayloadEntity] = useState(new SearchPayloadEntity());
+    const [searchDataEntity, setSearchDataEntity] = useState(new SearchDataEntity());
+
+    const [search, search$] = useSubject();
+    const [searchingMore, searchingMore$] = useSubject();
+    const [sorting, sorting$] = useSubject();
+
+    useEffect(() => {
+        const subs = new Subscription();
+
+        subs.add(
+            search$
+                .pipe(
+                    map(payloads =>
+                        merge(payloads, {
+                            payloadEntity: payloads.payloadEntity
+                                .setDefaults()
+                                .setQuery(payloads.query)
+                        })
+                    ),
+                    filter(({ payloadEntity }) => payloadEntity.isValid()),
+                    debounceTime(300),
+                    map(payloads =>
+                        merge(payloads, {
+                            searchDataEntity: payloads.searchDataEntity.asLoading()
+                        })
+                    ),
+                    tap(({ payloadEntity, searchDataEntity }) => {
+                        setPayloadEntity(payloadEntity);
+                        setSearchDataEntity(searchDataEntity);
+                    }),
+                    switchMap(({ searchDataEntity, payloadEntity }) =>
+                        from(
+                            SearchService.GET.search(
+                                merge(SearchPayloadEntity.getDefaults(), {
+                                    query: payloadEntity.valueOf().query
+                                })
+                            )
+                        ).pipe(
+                            tap(response => {
+                                setSearchDataEntity(searchDataEntity.asLoaded(response));
+                            }),
+                            catchError(() => {
+                                setSearchDataEntity(searchDataEntity.asLoadFail());
+                                return EMPTY;
+                            })
+                        )
+                    )
+                )
+                .subscribe()
+        );
+
+        subs.add(
+            searchingMore$
+                .pipe(
+                    filter(
+                        payloads =>
+                            !payloads.searchDataEntity.isBusy(payloads.searchParams.dataKeys) &&
+                            !payloads.searchDataEntity.isLoadedAll(payloads.searchParams.dataKeys)
+                    ),
+                    map(payloads =>
+                        merge(payloads, {
+                            searchDataEntity: payloads.searchDataEntity.asLoadingMore(
+                                payloads.searchParams.dataKeys
+                            ),
+                            payloadEntity: payloads.payloadEntity.incrementOffsets(
+                                payloads.searchParams.dataKeys
+                            )
+                        })
+                    ),
+                    tap(payloads => {
+                        setSearchDataEntity(payloads.searchDataEntity);
+                        setPayloadEntity(payloads.payloadEntity);
+                    }),
+                    switchMap(({ searchDataEntity, payloadEntity, searchParams }) =>
+                        from(
+                            SearchService.GET.search(
+                                merge(SearchPayloadEntity.getDefaults(), {
+                                    query: payloadEntity.valueOf().query,
+                                    offset: payloadEntity.getOffset(searchParams.dataKeys[0]),
+                                    types: searchParams.searchTypes.join(','),
+                                    sortBy: payloadEntity.getSortBy(searchParams.dataKeys[0])
+                                })
+                            )
+                        ).pipe(
+                            tap(response => {
+                                setSearchDataEntity(
+                                    searchDataEntity.asLoadedMore(searchParams.dataKeys, response)
+                                );
+                            }),
+                            catchError(() => {
+                                setSearchDataEntity(
+                                    searchDataEntity.asLoadMoreFail(searchParams.dataKeys)
+                                );
+                                return EMPTY;
+                            }),
+                            takeUntil(search$)
+                        )
+                    )
+                )
+                .subscribe()
+        );
+
+        subs.add(
+            sorting$
+                .pipe(
+                    filter(
+                        payloads =>
+                            !payloads.searchDataEntity.isBusy(payloads.searchParams.dataKeys)
+                    ),
+                    map(payloads =>
+                        merge(payloads, {
+                            payloadEntity: payloads.payloadEntity.setSortBy(
+                                payloads.searchParams.dataKeys,
+                                payloads.sortBy
+                            ),
+                            searchDataEntity: payloads.searchDataEntity.asSorting(
+                                payloads.searchParams.dataKeys
+                            )
+                        })
+                    ),
+                    tap(payloads => {
+                        setSearchDataEntity(payloads.searchDataEntity);
+                        setPayloadEntity(payloads.payloadEntity);
+                    }),
+                    switchMap(({ searchDataEntity, payloadEntity, searchParams }) =>
+                        from(
+                            SearchService.GET.search(
+                                merge(SearchPayloadEntity.getDefaults(), {
+                                    query: payloadEntity.valueOf().query,
+                                    types: searchParams.searchTypes.join(','),
+                                    sortBy: payloadEntity.getSortBy(searchParams.dataKeys[0]),
+                                    limit: searchDataEntity.getLength(searchParams.dataKeys[0])
+                                })
+                            )
+                        ).pipe(
+                            tap(response => {
+                                setSearchDataEntity(
+                                    searchDataEntity.asSorted(searchParams.dataKeys, response)
+                                );
+                            }),
+                            catchError(() => {
+                                setSearchDataEntity(
+                                    searchDataEntity.asSortingFail(searchParams.dataKeys)
+                                );
+                                return EMPTY;
+                            }),
+                            takeUntil(search$)
+                        )
+                    )
+                )
+                .subscribe()
+        );
+
+        return () => {
+            subs.unsubscribe();
+        };
+    }, []);
+
+    const startSearching = query => {
+        search.next({ payloadEntity, searchDataEntity, query });
+    };
+
+    const startSearchingMore = searchParams => {
+        searchingMore.next({
+            payloadEntity,
+            searchDataEntity,
+            searchParams
+        });
+    };
+
+    const startSorting = (searchParams, sortBy) => {
+        sorting.next({
+            payloadEntity,
+            searchDataEntity,
+            searchParams,
+            sortBy
+        });
+    };
+
+    const value = useMemo(() => {
+        return {
+            searchData: searchDataEntity.valueOf(),
+            statelessSearchData: searchDataEntity.statelessValueOf(),
+            payload: payloadEntity.valueOf(),
+            startSearching,
+            startSearchingMore,
+            startSorting
+        };
+    }, [payloadEntity, searchDataEntity]);
+
+    return <SearchContext.Provider value={value}>{children}</SearchContext.Provider>;
+};
+
+export const useSearchProvider = () => useContext(SearchContext);
+```
+
+```ts
+// Serwis - logika komunikacji z serwerem, local storage, ciastkami, session storage, indexed db, ...itp
+import Api from 'services/utils/Api';
+import ENDPOINTS from 'models/enums/Endpoints';
+import { applyNonProdContractsMiddleware } from 'veh-core';
+
+const { get, createService } = Api;
+
+export const SearchService = createService(
+    applyNonProdContractsMiddleware(() => import('./contracts/SearchServiceContract'), {
+        GET: {
+            search: params => get(ENDPOINTS.SEARCH, { params })
+        }
+    })
+);
+
+```
+
+```ts 
+ServiceContract - kontrakt, który weryfikuje czy aplikacja korzysta z aktualnych modeli.
+
+import * as yup from 'yup';
+
+import { LIVE_STREAM_STATUSES } from '../../constants';
+
+const createNodeContract = contract =>
+    yup
+        .object()
+        .shape({
+            totalCount: yup.number().required(),
+            results: yup
+                .array()
+                .of(
+                    yup
+                        .object()
+                        .shape(contract)
+                        .required()
+                )
+                .required()
+        })
+        .notRequired();
+
+const SearchServiceContract = {
+    GET: {
+        search: yup.object().shape({
+            totalCount: yup.number().required(),
+            blogs: createNodeContract({
+                content: yup.string().required(),
+                createdAt: yup.string().required(),
+                eventName: yup.string().required(),
+                id: yup.number().required(),
+                isPublic: yup.bool().required(),
+                readingTime: yup.number().required(),
+                thumbnail: yup.string().nullable(),
+                title: yup.string().required(),
+                url: yup.string().required()
+            }),
+            discussions: createNodeContract({
+                description: yup.string().required(),
+                endDate: yup.string().nullable(),
+                eventName: yup.string().required(),
+                id: yup.number().required(),
+                isDiscussionActive: yup.bool().required(),
+                membersCount: yup.number().required(),
+                startDate: yup.string().nullable(),
+                title: yup.string().required(),
+                url: yup.string().required()
+            }),
+            documents: createNodeContract({
+                createdAt: yup.string().required(),
+                description: yup.string().required(),
+                eventName: yup.string().required(),
+                fileExtension: yup.string().required(),
+                id: yup.number().required(),
+                size: yup.number().required(),
+                thumbnail: yup.string().nullable(),
+                title: yup.string().required(),
+                url: yup.string().required()
+            }),
+            eventFaqItems: createNodeContract({
+                answer: yup.string().required(),
+                createdAt: yup.string().required(),
+                id: yup.number().required(),
+                question: yup.string().required(),
+                url: yup.string().required()
+            }),
+            eventMembers: createNodeContract({
+                description: yup.string().nullable(),
+                emailAddress: yup.string().required(),
+                fullName: yup.string().required(),
+                id: yup.number().required(),
+                jobTitle: yup.string().required(),
+                phoneNumber: yup.string().required(),
+                photo: yup.string().nullable()
+            }),
+            events: createNodeContract({
+                accessType: yup.number().required(),
+                editUrl: yup.string().required(),
+                eventName: yup.string().required(),
+                id: yup.number().required(),
+                navigationImage: yup.string().nullable(),
+                numberOfHCPUsers: yup.number().required(),
+                numberOfRocheUsers: yup.number().required(),
+                status: yup.number().required(),
+                totalNumberOfUsers: yup.number().required(),
+                url: yup.string().required()
+            }),
+            links: createNodeContract({
+                createdAt: yup.string().required(),
+                description: yup.string().required(),
+                eventName: yup.string().required(),
+                id: yup.number().required(),
+                isPublic: yup.bool().required(),
+                thumbnail: yup.string().required(),
+                thumbnailUrl: yup.string().nullable(),
+                title: yup.string().required(),
+                type: yup.string().required(),
+                url: yup.string().required()
+            }),
+            liveSessions: createNodeContract({
+                description: yup.string().required(),
+                eventName: yup.string().required(),
+                id: yup.number().required(),
+                liveSessionUrl: yup.string().required(),
+                startDate: yup.string().required(),
+                status: yup
+                    .mixed()
+                    .oneOf(LIVE_STREAM_STATUSES)
+                    .required(),
+                thumbnail: yup.string().required(),
+                title: yup.string().required(),
+                type: yup.string().required(),
+                url: yup.string().required()
+            }),
+            messages: createNodeContract({}),
+            textBoxes: createNodeContract({}),
+            videos: createNodeContract({
+                createdAt: yup.string().required(),
+                description: yup.string().required(),
+                eventName: yup.string().required(),
+                id: yup.number().required(),
+                isPublic: yup.bool().required(),
+                kalturaResponse: yup.object().required(),
+                kalturaVideoId: yup.string().required(),
+                thumbnail: yup.string().required(),
+                title: yup.string().required(),
+                url: yup.string().required()
+            })
+        })
+    }
+};
+
+export default SearchServiceContract;
+```
+
 ### Podsumowanie
 
 Przeszliśmy przez kilka implementacji i rozwiązań tego samego problemu. Każde z nich ma swoje dobre i słabe strony. Kwestią doświadczenia jest dobór odpowiedniego rozwiązania dlatego nigdy nie powinniśmy zamykać się na własne eksperymenty. 

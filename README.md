@@ -906,6 +906,8 @@ Poniżej fragment dokumentu opisującego podejście do pisania kodu w projekcie 
 
 https://github.com/polubis/Billennium-workshops-03-State-management/blob/main/README_DS.md
 
+#### Przykładowa implementacja w `react`
+
 ### Podsumowanie
 
 Przeszliśmy przez kilka implementacji i rozwiązań tego samego problemu. Każde z nich ma swoje dobre i słabe strony. Kwestią doświadczenia jest dobór odpowiedniego rozwiązania dlatego nigdy nie powinniśmy zamykać się na własne eksperymenty. 

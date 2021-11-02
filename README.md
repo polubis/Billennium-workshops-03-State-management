@@ -169,6 +169,8 @@ TemplatesViewStateMachine()
   .next()
   .next({ templates: [{ id: 1, name: "State machines" }] })
   .read();
+ 
+TemplatesViewStateMachine.set(APP_LOADING) // przetworzy stan lub rzuci błąd
 ```
 
 #### Maszyna stanów z xstate

@@ -239,9 +239,94 @@ basicUser.setUsername('Asia').valueOf()
 
 #### Decorator
 
+Tworzymy funkcje, która bierze obiekt serwisu oraz obiekt kontraktu i nadpisuje funkcje w serwisie dodając dodatkową implementację weryfikująca kontrakty na środowisku z odpowiednio ustawioną flagą. 
 
 ```ts
-Tu dodać przykłąd z veh
+// Kontrakt i walidacja za pomocą biblioteki yup
+const SearchServiceContract = {
+    GET: {
+        search: yup.object().shape({
+            totalCount: yup.number().required(),
+        })
+    }
+};
+
+export default SearchServiceContract;
+```
+
+```ts
+// Ustawienie kontraktów tylko na środowiskach z dedykowaną flagą.
+export const applyNonProdContractsMiddleware = applyContractsMiddleware(__IS_CONTRACT_TESTING_ENABLED);
+```
+
+```ts
+// Plik z serwisem i wykorzystanie middleware z walidacją kontraktu.
+export const SearchService = createService(
+    applyNonProdContractsMiddleware(() => import('./contracts/SearchServiceContract'), {
+        GET: {
+            search: params => get(ENDPOINTS.SEARCH, { params })
+        }
+    })
+);
+```
+
+```ts
+const checkContract = (promise, contract, region) => {
+    return new Promise((resolve, reject) => {
+        promise
+            .then(response => {
+                contract.validate(response, { strict: true }).catch(validationError => {
+                    console.error(`Invalid data in ${region} contract`);
+                    console.error(validationError);
+                });
+                resolve(response);
+            })
+            .catch(error => {
+                reject(error);
+            });
+    });
+};
+
+// Implementacja wzorca dekorator
+const applyContractsMiddleware = enabled => (contractsPromiseFn, serviceConfig) => {
+    if (!enabled) {
+        return serviceConfig;
+    }
+
+    const methodsKeys = Object.keys(serviceConfig);
+
+    methodsKeys.forEach(methodKey => {
+        const endpointsKeys = Object.keys(serviceConfig[methodKey]);
+
+        endpointsKeys.forEach(endpointKey => {
+            const endpoint = serviceConfig[methodKey][endpointKey];
+
+            if (endpoint !== undefined) {
+                serviceConfig[methodKey][endpointKey] = (...args) => {
+                    const promise = endpoint(...args);
+
+                    contractsPromiseFn().then(module => {
+                        if (!module.default) {
+                            throw new Error(
+                                '[INVALID_MODULE_EXPORT] Contracts files must be default exported'
+                            );
+                        }
+
+                        checkContract(
+                            promise,
+                            module.default[methodKey][endpointKey],
+                            `${methodKey} -> ${endpointKey}`
+                        );
+                    });
+
+                    return promise;
+                };
+            }
+        });
+    });
+
+    return serviceConfig;
+};
 ```
 
 #### Chain of responsibility
@@ -817,7 +902,9 @@ Wykorzystywanie obydwu paradygmatów powinno mieć swoje uzasadnienie. Przykład
 
 Framework to nic innego jak zestaw podejść, dobrych praktyk, narzędzi, technologii. Większość z nich już mamy. Musimy tylko odpowiednio je dobierać do problemu. Wystarczy spisać gdzieś w jednym miejscu wszystkie reguły, które powinny być przestrzegane oraz stworzyć narzędzia - patrz `Feature`. 
 
-Wklej tu imp z veh.
+Poniżej fragment dokumentu opisującego podejście do pisania kodu w projekcie oraz aspekty architektoniczne.
+
+https://github.com/polubis/Billennium-workshops-03-State-management/blob/main/README_DS.md
 
 ### Podsumowanie
 

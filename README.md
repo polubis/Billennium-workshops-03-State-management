@@ -146,6 +146,8 @@ const { subreddit, posts } = current.context;  // -> odczyt danych
 
 #### Builder
 
+![Builder](https://d-art.ppstatic.pl/kadry/k/r/43/0f/57cecc1754f79_o_full.jpg)
+
 Wzorzec wykorzystywany do budowania złożonych obiektów. Idealnie wpisuje się w budowanie stanu krok po kroku. Dodatkowo z wykorzystaniem wzorca **chain of responsibility** pozwala stworzyć wygodne i przejrzyste api. W poniższym przykładzie - tworzymy obiekt użytkownika, a następnie go modyfikujemy przed wykonaniem `valueOf()`.
 
 ```ts

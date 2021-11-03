@@ -1,4 +1,4 @@
-# Billennium-workshops-03-State-management-and-application-flow/architecture
+# State management and application architecture
 
 Warsztaty wprowadzające w różne techniki zarządzania stanem i architekture aplikacji frontendowej.
 

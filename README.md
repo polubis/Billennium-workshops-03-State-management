@@ -6,10 +6,6 @@ Warsztaty wprowadzające w różne techniki zarządzania stanem i architekture a
 
 ### Czym jest state / state management - na przykładzie Jasia
 
-- Dla uproszczenia przyjmijmy, że rozmawiamy na temat matury z Jasiem.
-- Tłumaczymy mu jakieś skomplikowane zagadnienie.
-- Na twarzy Jasia pojawia się mniej więcej taki wyraz.
-
 ![Jasio](https://paczaizm.pl/content/wp-content/uploads/matura-matematyka-poprawne-odpowiedzi-chory-dzieciak-dziecko-goraczka-lapie-sie-za-czolo.jpg)
 
 - To co widzimy możemy prosto nazwać - stan.
